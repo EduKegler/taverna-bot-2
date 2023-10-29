@@ -20,7 +20,9 @@ const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.GuildMembers,
     GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMessageReactions,
   ],
 }) as ClientWithCommands;
 
@@ -68,6 +70,7 @@ const registerCommands = async () => {
     console.log(
       `Started refreshing ${commands.length} application (/) commands.`,
     );
+
     const data = (await rest.put(
       Routes.applicationGuildCommands(
         process.env.TAVERNA_CLIENT_ID || "",

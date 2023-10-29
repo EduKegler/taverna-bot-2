@@ -49,11 +49,11 @@ const execute = async (interaction: ChatInputCommandInteraction) => {
       });
   }
 
-  const role = interaction.guild?.roles.cache.get(guild.roleId);
-
+  await interaction.guild?.members.fetch();
+  const role = await interaction.guild?.roles.fetch(guild.roleId);
   const members = role?.members?.map((e) => ({
     id: e.user.id,
-    name: e.user.username,
+    name: e.user.displayName || e.user.username,
   }));
 
   const [names1, names2] = generateGroups(members || []);
@@ -119,6 +119,16 @@ const execute = async (interaction: ChatInputCommandInteraction) => {
 \nQuem ganhou? \n`,
     components: [row],
   });
+
+  //   return interaction.reply({
+  //     content: `
+  //             **Grupo 1:** ${names1.map((name) => `<@${name.name}>`).join(" - ")}
+  // **Champions:** \n${champions1.map((c) => `${c.icon} **${c.name}**`).join("\n")}
+  //             **\nGrupo 2**: ${names2.map((name) => `<@${name.name}>`).join(" - ")}
+  // **Champions:** \n${champions2.map((c) => `${c.icon} **${c.name}**`).join("\n")}
+  // \nQuem ganhou? \n`,
+  //     components: [row],
+  //   });
 };
 
 export default { data, execute };

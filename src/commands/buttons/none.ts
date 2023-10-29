@@ -1,5 +1,4 @@
 import { ButtonInteraction } from "discord.js";
-import { setWinnerTeam } from "../../utils.js";
 import { Game } from "../../db/models.js";
 import { GameModel } from "../../types.js";
 

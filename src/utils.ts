@@ -1,7 +1,7 @@
 import { ButtonInteraction } from "discord.js";
 import { champions } from "./assets.js";
-import { GameModel, Member, PlayersModel } from "./types.js";
-import { Game, Player, User } from "./db/models.js";
+import { GameModel, GuildModel, Member, PlayersModel } from "./types.js";
+import { Game, Guild, Player, User } from "./db/models.js";
 import { Sequelize } from "sequelize";
 
 function shuffleArray<T>(arr: T[]): T[] {
@@ -37,6 +37,10 @@ export const setWinnerTeam = async (
   interaction: ButtonInteraction,
   isBlueSide: boolean,
 ) => {
+  const guildModel = await Guild.findOne({
+    where: { id: interaction.guildId },
+  });
+
   const gameModelVerify = await Game.findOne({
     where: {
       guildId: interaction.guildId,
@@ -77,6 +81,10 @@ export const setWinnerTeam = async (
 
   await gameModelVerify?.update({
     isDone: true,
+  });
+
+  await guildModel?.update({
+    total_games: Sequelize.literal("total_games + 1"),
   });
 
   await interaction.update({

@@ -19,7 +19,7 @@ const execute = async (interaction: ChatInputCommandInteraction) => {
     await Guild.upsert({
       id: guild?.id,
       name: guild?.name,
-      totalGames: 0,
+      total_games: 0,
       roleId: role?.id,
       roleName: role?.name,
     });
@@ -27,7 +27,8 @@ const execute = async (interaction: ChatInputCommandInteraction) => {
     console.log(error);
   }
   await interaction.reply({
-    content: `Servidor ${guild?.name} esta conectado ao bot usando a role <@&${role?.id}>`,
+    content: `Servidor ${guild?.name} esta conectado ao bot usando a role x`,
+    // content: `Servidor ${guild?.name} esta conectado ao bot usando a role <@&${role?.id}>`,
   });
 };
 

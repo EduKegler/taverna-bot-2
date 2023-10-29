@@ -37,7 +37,7 @@ const execute = async (interaction: ChatInputCommandInteraction) => {
 
   return interaction.reply({
     content: `
-  Placar - Total de Jogos **${guild.totalGames}**\`\`\`${orderList
+  Placar - Total de Jogos **${guild.total_games}**\`\`\`${orderList
     .map((user) => `${user.name} - ${user.score}`)
     .join("\n")}\`\`\`
   `,

@@ -7,7 +7,7 @@ export interface ClientWithCommands extends Client {
 export interface GuildModel {
   id: string;
   name: string;
-  totalGames: string;
+  total_games: string;
   roleId: string;
   roleName: string;
 }

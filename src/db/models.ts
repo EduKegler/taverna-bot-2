@@ -9,7 +9,7 @@ export const Guild = sequelize.define("guilds", {
   name: {
     type: Sequelize.STRING,
   },
-  totalGames: {
+  total_games: {
     type: Sequelize.INTEGER,
     allowNull: false,
   },
