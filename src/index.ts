@@ -1,17 +1,20 @@
-import { Client, GatewayIntentBits, Collection } from "discord.js";
+import {
+  Client,
+  GatewayIntentBits,
+  Collection,
+  REST,
+  Routes,
+} from "discord.js";
 import { config } from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
+import { ClientWithCommands } from "./types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 config();
-
-interface ClientWithCommands extends Client {
-  commands: Collection<string, any>;
-}
 
 const client = new Client({
   intents: [
@@ -21,17 +24,16 @@ const client = new Client({
   ],
 }) as ClientWithCommands;
 
-const TOKEN = process.env.TAVERNA_BOT_TOKEN;
+const TOKEN = process.env.TAVERNA_BOT_TOKEN || "";
 
 client.login(TOKEN);
 
-client.on("ready", () => {
-  console.log(`${client.user?.tag} acabou de entrar.`);
-});
-
 client["commands"] = new Collection();
 
+const rest = new REST().setToken(TOKEN);
+
 const registerCommands = async () => {
+  const commands = [];
   const foldersPath = path.join(__dirname, "commands");
   const commandFolders = fs.readdirSync(foldersPath);
   for (const folder of commandFolders) {
@@ -42,9 +44,18 @@ const registerCommands = async () => {
     for (const file of commandFiles) {
       const filePath = path.join(commandsPath, file);
       const command = await import(`./commands/${folder}/${file}`);
-      if ("data" in command.default && "execute" in command.default) {
-        console.log(`Added ${command.default.data.name} command.`);
-        client.commands.set(command.default.data.name, command.default);
+      if (
+        ("data" in command.default || "id" in command.default) &&
+        "execute" in command.default
+      ) {
+        if ("data" in command.default) {
+          console.log(`Added ${command.default.data.name} command.`);
+          client.commands.set(command.default.data.name, command.default);
+          commands.push(command.default.data.toJSON());
+        } else {
+          console.log(`Added ${command.default.id} button.`);
+          client.commands.set(command.default.id, command.default);
+        }
       } else {
         console.log(
           `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`,
@@ -52,33 +63,42 @@ const registerCommands = async () => {
       }
     }
   }
+
+  try {
+    console.log(
+      `Started refreshing ${commands.length} application (/) commands.`,
+    );
+    const data = (await rest.put(
+      Routes.applicationGuildCommands(
+        process.env.TAVERNA_CLIENT_ID || "",
+        process.env.TAVERNA_SERVER_ID || "",
+      ),
+      { body: commands },
+    )) as unknown[];
+    console.log(
+      `Successfully reloaded ${data.length} application (/) commands.`,
+    );
+  } catch (error) {
+    // And of course, make sure you catch and log any errors!
+    console.error(error);
+  }
 };
 
-client.on("interactionCreate", async (interaction) => {
-  if (!interaction.isChatInputCommand()) return;
-  const command = (interaction.client as ClientWithCommands).commands.get(
-    interaction.commandName,
-  );
-  if (!command) {
-    console.error(`No command matching ${interaction.commandName} was found.`);
-    return;
-  }
-  try {
-    await command.execute(interaction);
-  } catch (error) {
-    console.error(error);
-    if (interaction.replied || interaction.deferred) {
-      await interaction.followUp({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
+const registerEvents = async () => {
+  const eventsPath = path.join(__dirname, "events");
+  const eventFiles = fs
+    .readdirSync(eventsPath)
+    .filter((file) => file.endsWith(".ts"));
+
+  for (const file of eventFiles) {
+    const event = await import(`./events/${file}`);
+    if (event.once) {
+      client.once(event.name, (...args) => event.execute(...args));
     } else {
-      await interaction.reply({
-        content: "There was an error while executing this command!",
-        ephemeral: true,
-      });
+      client.on(event.name, (...args) => event.execute(...args));
     }
   }
-});
+};
 
 registerCommands();
+registerEvents();
